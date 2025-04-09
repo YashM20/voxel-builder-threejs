@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Voxel Builder</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-900 text-white m-0 overflow-hidden">
+  <canvas id="bg"></canvas>
+  
+  <!-- Crosshair -->
+  <div class="crosshair"></div>
+
+  <!-- UI Overlay -->
+  <div id="ui-container" class="fixed top-0 right-0 h-screen flex flex-col p-4 z-10 pointer-events-none">
+    <!-- Block Palette -->
+    <div id="block-palette" class="bg-gray-800 bg-opacity-80 rounded-lg p-3 mb-3 pointer-events-auto w-60">
+      <h3 class="text-sm font-bold mb-2">Block Types</h3>
+      <div class="flex flex-wrap gap-2">
+        <button id="block-1" class="block-btn bg-green-500 w-10 h-10 rounded-md active" data-type="1"></button>
+        <button id="block-2" class="block-btn bg-blue-500 w-10 h-10 rounded-md" data-type="2"></button>
+        <button id="block-3" class="block-btn bg-red-500 w-10 h-10 rounded-md" data-type="3"></button>
+        <button id="block-4" class="block-btn bg-yellow-500 w-10 h-10 rounded-md" data-type="4"></button>
+        <button id="block-5" class="block-btn bg-purple-500 w-10 h-10 rounded-md" data-type="5"></button>
+        <button id="block-6" class="block-btn bg-pink-500 w-10 h-10 rounded-md" data-type="6"></button>
+      </div>
+    </div>
+
+    <!-- Connected Users -->
+    <div id="users-container" class="bg-gray-800 bg-opacity-80 rounded-lg p-3 mb-3 pointer-events-auto w-60">
+      <h3 class="text-sm font-bold mb-2">Connected Users</h3>
+      <ul id="users-list" class="text-xs list-none max-h-48 overflow-y-auto">
+        <li class="py-1">Loading...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Left Side Controls -->
+  <div id="controls-container" class="fixed top-0 left-0 p-4 z-10 pointer-events-none">
+    <!-- Instructions Panel -->
+    <div id="instructions" class="bg-gray-800 bg-opacity-80 rounded-lg p-3 mb-3 pointer-events-auto max-w-xs">
+      <h3 class="text-sm font-bold mb-2">Controls</h3>
+      <ul class="text-xs list-none">
+        <li class="py-1">• Left Click: Place Selected Block</li>
+        <li class="py-1">• Right Click: Remove Block</li>
+        <li class="py-1">• Mouse Wheel: Zoom</li>
+        <li class="py-1">• Middle Click + Drag: Rotate</li>
+        <li class="py-1">• WASD: Move Camera</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Status Message -->
+  <div id="status-container" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+    <div id="status-message" class="bg-gray-800 bg-opacity-80 rounded-lg py-2 px-4 hidden text-center transition-opacity">
+      Connecting to server...
+    </div>
+  </div>
+
+  <!-- Import maps for Three.js modules -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.163.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.163.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>

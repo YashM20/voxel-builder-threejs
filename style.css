@@ -1,0 +1,94 @@
+/* client/style.css */
+body {
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars from browser window */
+    font-family: sans-serif;
+}
+
+canvas#bg {
+    display: block; /* Remove extra space below canvas */
+    width: 100vw;
+    height: 100vh;
+    outline: none;
+}
+
+#instructions {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 5px;
+    font-size: 14px;
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Block palette buttons */
+.block-btn {
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    border: 2px solid transparent;
+}
+
+.block-btn:hover {
+    transform: translateY(-2px);
+    cursor: pointer;
+}
+
+.block-btn.active {
+    border: 2px solid white;
+    box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* Crosshair in the center of the screen */
+.crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 100;
+}
+
+.crosshair::before,
+.crosshair::after {
+    content: '';
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.crosshair::before {
+    width: 2px;
+    height: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.crosshair::after {
+    width: 20px;
+    height: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Status message animation */
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.fade-out {
+    animation: fadeOut 1.5s forwards;
+}
+
+/* User marker */
+.user-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}

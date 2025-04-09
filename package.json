@@ -1,0 +1,17 @@
+{
+  "name": "vox",
+  "version": "1.0.0",
+  "description": "Collaborative Real-time Voxel Builder",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["voxel", "threejs", "websocket", "collaborative"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.18.1",
+    "express": "^4.18.2"
+  }
+}
