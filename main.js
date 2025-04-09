@@ -5,6 +5,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 // --- Constants ---
 const SERVER_URL = `ws://${window.location.hostname}:${window.location.port}`; // Adjust this based on your server setup
 const BLOCK_SIZE = 1; // Size of one voxel cube
+const WORLD_WIDTH = 16;
+const WORLD_HEIGHT = 16;
+const WORLD_DEPTH = 16;
+
+// Calculate world offset to center it (half of each dimension)
+const WORLD_OFFSET_X = -WORLD_WIDTH / 2;
+const WORLD_OFFSET_Y = 0; // Keep Y at 0 for ground level
+const WORLD_OFFSET_Z = -WORLD_DEPTH / 2;
 
 // --- DOM Elements ---
 const statusMessage = document.getElementById('status-message');
@@ -23,7 +31,8 @@ scene.background = new THREE.Color(0x1e293b); // Dark blue background
 
 // Camera with wider field of view for better overview
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(16, 16, 24); // Position for a nice overview of the default world size
+// Position the camera to view the centered world from a good angle
+camera.position.set(16, 16, 24);
 
 // Renderer with antialiasing for smoother edges
 const renderer = new THREE.WebGLRenderer({
@@ -66,6 +75,10 @@ controls.minDistance = 5;
 controls.maxDistance = 100;
 controls.maxPolarAngle = Math.PI / 2; // Prevent going below the horizon
 
+// Center the controls target on the world center
+controls.target.set(0, 0, 0);
+controls.update();
+
 // --- Voxel Management ---
 const voxelMeshes = {}; // Store meshes keyed by "x,y,z"
 
@@ -83,13 +96,16 @@ const blockMaterials = {
 const voxelGeometry = new THREE.BoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
 
 // Grid Helper
-const gridSize = 16;
+const gridSize = WORLD_WIDTH;
 const gridHelper = new THREE.GridHelper(gridSize, gridSize, 0x888888, 0x444444);
-gridHelper.position.y = 0.01; // Slightly above ground to prevent z-fighting
+// Position grid at center of world with proper offset
+gridHelper.position.set(WORLD_OFFSET_X + WORLD_WIDTH/2, 0.01, WORLD_OFFSET_Z + WORLD_DEPTH/2); 
 scene.add(gridHelper);
 
 // Axes Helper
 const axesHelper = new THREE.AxesHelper(5);
+// Position axes at center of world with proper offset
+axesHelper.position.set(WORLD_OFFSET_X, 0, WORLD_OFFSET_Z);
 scene.add(axesHelper);
 
 // World border for better visual reference
@@ -98,10 +114,15 @@ function createWorldBorders(width, height, depth) {
   const borderGeometry = new THREE.BoxGeometry(width, height, depth);
   const borderEdges = new THREE.EdgesGeometry(borderGeometry);
   const borderLines = new THREE.LineSegments(borderEdges, borderMaterial);
-  borderLines.position.set(width/2 - 0.5, height/2 - 0.5, depth/2 - 0.5);
+  // Center the border in world space
+  borderLines.position.set(
+    WORLD_OFFSET_X + width/2,
+    WORLD_OFFSET_Y + height/2,
+    WORLD_OFFSET_Z + depth/2
+  );
   scene.add(borderLines);
 }
-createWorldBorders(16, 16, 16); // Match world dimensions
+createWorldBorders(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH); // Match world dimensions
 
 // Simple animation helper
 class Tween {
@@ -202,10 +223,11 @@ function addVoxelMesh(x, y, z, blockType, clientColor = null) {
     customMaterial.emissiveIntensity = 0.15; // Subtle glow effect
     
     const mesh = new THREE.Mesh(voxelGeometry, customMaterial);
+    // Apply world offset to position
     mesh.position.set(
-      x * BLOCK_SIZE + BLOCK_SIZE / 2,
-      y * BLOCK_SIZE + BLOCK_SIZE / 2,
-      z * BLOCK_SIZE + BLOCK_SIZE / 2
+      WORLD_OFFSET_X + x * BLOCK_SIZE + BLOCK_SIZE / 2,
+      WORLD_OFFSET_Y + y * BLOCK_SIZE + BLOCK_SIZE / 2,
+      WORLD_OFFSET_Z + z * BLOCK_SIZE + BLOCK_SIZE / 2
     );
     mesh.userData = { x, y, z, blockType, isVoxel: true };
     
@@ -222,10 +244,11 @@ function addVoxelMesh(x, y, z, blockType, clientColor = null) {
   } else {
     // Regular block without animation
     const mesh = new THREE.Mesh(voxelGeometry, material);
+    // Apply world offset to position
     mesh.position.set(
-      x * BLOCK_SIZE + BLOCK_SIZE / 2,
-      y * BLOCK_SIZE + BLOCK_SIZE / 2,
-      z * BLOCK_SIZE + BLOCK_SIZE / 2
+      WORLD_OFFSET_X + x * BLOCK_SIZE + BLOCK_SIZE / 2,
+      WORLD_OFFSET_Y + y * BLOCK_SIZE + BLOCK_SIZE / 2,
+      WORLD_OFFSET_Z + z * BLOCK_SIZE + BLOCK_SIZE / 2
     );
     mesh.userData = { x, y, z, blockType, isVoxel: true };
     
@@ -485,9 +508,9 @@ function onMouseClick(event) {
         };
         
         // Check if position is within world bounds
-        if (placePos.x >= 0 && placePos.x < 16 && 
-            placePos.y >= 0 && placePos.y < 16 && 
-            placePos.z >= 0 && placePos.z < 16) {
+        if (placePos.x >= 0 && placePos.x < WORLD_WIDTH && 
+            placePos.y >= 0 && placePos.y < WORLD_HEIGHT && 
+            placePos.z >= 0 && placePos.z < WORLD_DEPTH) {
           sendVoxelUpdate(placePos.x, placePos.y, placePos.z, selectedBlockType);
         } else {
           showStatus("Can't place block outside world boundaries", 1500);
@@ -501,14 +524,23 @@ function onMouseClick(event) {
       // Clicked on the grid - place block on top
       if (event.button === 0) { // Left click only
         // Convert intersection point to grid position
-        const point = intersect.point.add(new THREE.Vector3(0, 0.5, 0)); // Move slightly up from grid
-        const x = Math.floor(point.x + 0.5);
-        const y = Math.floor(point.y + 0.5); // Should be 0 or 1
-        const z = Math.floor(point.z + 0.5);
+        const point = new THREE.Vector3().copy(intersect.point);
+        
+        // Adjust for world offset
+        const adjustedX = point.x - WORLD_OFFSET_X;
+        const adjustedZ = point.z - WORLD_OFFSET_Z;
+        
+        const x = Math.floor(adjustedX);
+        const y = 1; // Start at 1 block above ground
+        const z = Math.floor(adjustedZ);
         
         // Check if position is within world bounds
-        if (x >= 0 && x < 16 && y >= 0 && y < 16 && z >= 0 && z < 16) {
+        if (x >= 0 && x < WORLD_WIDTH && 
+            y >= 0 && y < WORLD_HEIGHT && 
+            z >= 0 && z < WORLD_DEPTH) {
           sendVoxelUpdate(x, y, z, selectedBlockType);
+        } else {
+          showStatus("Can't place block outside world boundaries", 1500);
         }
       }
       return;
